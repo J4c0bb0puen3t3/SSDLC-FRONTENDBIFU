@@ -1,11 +1,17 @@
 <template>
   <div class="incidence-list">
     <h2>Mis Incidencias</h2>
-    <button @click="logout">Cerrar Sesión</button><br></br><br></br>
+    <button @click="logout" class="logout-button">Cerrar Sesión</button>
+    <br><br>
 
     <router-link to="/generate_incidence">
       <button>Generar Nueva Incidencia</button>
     </router-link>
+
+    <!-- Botones Exportar -->
+    <button @click="exportPdf">Exportar a PDF</button>
+
+
 
     <div v-if="incidences.length">
       <div v-for="i in incidences" :key="i.id" class="incidence-item">
@@ -13,7 +19,6 @@
           {{ i.type }}
           <span class="status" :class="i.status">{{ i.status }}</span>
         </h3>
-        >
         <p><strong>Ubicación:</strong> {{ i.location }}</p>
         <p>{{ i.description }}</p>
         <p v-if="i.attachment">
@@ -25,6 +30,7 @@
     <p v-else>No hay incidencias registradas.</p>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from '@/api/axios'
@@ -51,13 +57,35 @@ const logout = async () => {
 }
 
 const getFileUrl = (path) => {
-  return 'http://127.0.0.1:8000/storage/${path}'
+  return `http://127.0.0.1:8000/storage/${path}`
 }
 
 const formateDate = (datetime) => {
   return new Date(datetime).toLocaleDateString()
 }
+
+// ✅ Descargar PDF
+const exportPdf = async () => {
+  try {
+    const response = await axios.get('/api/reports/export-pdf', {
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'mis_incidencias.pdf');
+    document.body.appendChild(link);
+    link.click();
+  } catch (error) {
+    console.error('Error al exportar PDF:', error);
+  }
+};
+
+
+
 </script>
+
 <style scoped>
 .incidence-list {
   max-width: 800px;
@@ -72,6 +100,18 @@ const formateDate = (datetime) => {
   border: none;
   margin-bottom: 1rem;
   border-radius: 5px;
+  cursor: pointer;
+}
+.export-buttons {
+  margin: 1rem 0;
+}
+.export-buttons button {
+  margin-right: 10px;
+  padding: 0.5rem 1rem;
+  background-color: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
 }
 .incidence-item {
